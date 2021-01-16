@@ -9,15 +9,21 @@ import img2pdf
 import wget
 import shutil
 
-def main(url):
+# SLIDESHARE , ISSUE , SCRIBD , ACADEMIA.EDU
+# images , document => scribd , academia.edu
 
+
+def main(url):
     if 'issuu' in url:
         contenido = issuu(url)
     elif 'slideshare' in url:
         contenido = slideshare(url)
     elif 'scribd' in url:
         contenido = scribd(url)
+
    # return dowload(contenido)
+
+
 
 def slideshare(url):
     contenido = {}
@@ -76,9 +82,18 @@ def scribd(url):
     try:
         response = requests.get(url)
         if response.status_code == 200:
-            s = BeautifulSoup(response.text, 'lxml')
+            s = BeautifulSoup(response.text, 'html.parser')
             title = s.find("h1").get_text().strip()
-            scripts = s.find_all("script", type="text/javascript");
+            style = s.find("style")
+            # revisar el codigo fuente , los scripts.
+            style2 = s.find("style  ")
+            f = open('holamundo.html', 'w')
+            style_html = style.text
+            mensaje = f'<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Title</title></head><style>${style_html}</style><body></body></html>'
+            f.write(mensaje)
+            f.close()
+
+            scripts = s.find_all("script", type="text/javascript")
             jsonp_urls = []
             for script in scripts:
                 for content in script:
@@ -90,7 +105,7 @@ def scribd(url):
 
             print(f'Extrayendo documento : {title}')
             for url in jsonp_urls:
-                extract_text(url,title)
+                extract_text(url)
         else:
             print('No se pudo obtener el documento', url)
     except Exception as e:
@@ -98,16 +113,16 @@ def scribd(url):
 
 
 
-def extract_text(url,title):
-    print(url)
+def extract_text(url):
     response = requests.get(url).text
     page_no = response[11:13]
     if ('_' in page_no):
         page_no  = page_no.replace("_","")
     response_head = response.replace("window.page" + page_no + '_callback(["', "").replace("\\n", "").replace("\\", "").replace('"]);', "").replace("orig","src")
-    print(response_head)
     s = BeautifulSoup(response_head, "html.parser")
+    print(s)
     s_texts = s.find_all("span", attrs={'class': 'a'})
+   # for text in s_texts:
 
 
 
@@ -144,5 +159,5 @@ def dowload(contenido):
 
 
 if __name__ == "__main__":
-    url = 'https://www.scribd.com/document/97749846/Laboratorio-de-Materiales-Fic-uni'
+    url = 'https://www.scribd.com/document/52502066/desorcion-gaseosa-final'
     main(url)
