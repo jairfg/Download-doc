@@ -1,5 +1,7 @@
 import random
 import sys
+import time
+
 from bs4 import BeautifulSoup
 from selenium import webdriver
 import requests
@@ -20,7 +22,8 @@ def main(url):
         contenido = slideshare(url)
     elif 'scribd' in url:
         contenido = scribd(url)
-
+    elif 'academia' in url:
+        contenido = academia(url)
    # return dowload(contenido)
 
 
@@ -78,22 +81,46 @@ def issuu(url):
     return contenido
 # dowloand document
 
+
+# contenido = { title : "titulo" , link_pages : [ links ] }
+
+def academia(url):
+    print(url)
+    options = webdriver.ChromeOptions()
+    options.add_argument('--incognito')
+    driver = webdriver.Chrome(executable_path='/home/jkevin/Projects/python/download-doc/chromedriver',options=options)
+    driver.get(url)
+    driver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
+    time.sleep(5)
+    page_source = driver.page_source
+    s = BeautifulSoup(page_source, 'lxml')
+    title = s.find("h1").get_text().strip()
+    print(title)
+    scripts = s.find_all("script", type="text/javascript")
+    styles = s.find_all("style")
+    jsonp_urls = []
+    for script in scripts:
+        for content in script:
+            inicio_url = content.find("https://")
+            final_url = content.find(".jsonp")
+            if inicio_url != -1 and final_url != -1:
+                jsonp = content[inicio_url: final_url + 6]
+                jsonp_urls.append(jsonp)
+    print(f'Extrayendo documento : {title}')
+    for url in jsonp_urls:
+        extract_html(url)
+    driver.close()
+
 def scribd(url):
+    contenido = {}
+    images = []
     try:
         response = requests.get(url)
         if response.status_code == 200:
             s = BeautifulSoup(response.text, 'html.parser')
             title = s.find("h1").get_text().strip()
-            style = s.find("style")
-            # revisar el codigo fuente , los scripts.
-            style2 = s.find("style  ")
-            f = open('holamundo.html', 'w')
-            style_html = style.text
-            mensaje = f'<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Title</title></head><style>${style_html}</style><body></body></html>'
-            f.write(mensaje)
-            f.close()
-
             scripts = s.find_all("script", type="text/javascript")
+            print(scripts)
             jsonp_urls = []
             for script in scripts:
                 for content in script:
@@ -102,37 +129,39 @@ def scribd(url):
                     if inicio_url != -1 and final_url != -1:
                         jsonp = content[inicio_url: final_url + 6]
                         jsonp_urls.append(jsonp)
-
             print(f'Extrayendo documento : {title}')
             for url in jsonp_urls:
-                extract_text(url)
+                link_images = extract_html(url)
+                print(link_images)
+                images.append(link_images)
+            contenido['title'] = title
+            contenido['link_pages'] = images
         else:
             print('No se pudo obtener el documento', url)
     except Exception as e:
         print(f'Error {e}')
+    return contenido
 
-
-
-def extract_text(url):
+def extract_html(url):
     response = requests.get(url).text
     page_no = response[11:13]
     if ('_' in page_no):
         page_no  = page_no.replace("_","")
     response_head = response.replace("window.page" + page_no + '_callback(["', "").replace("\\n", "").replace("\\", "").replace('"]);', "").replace("orig","src")
     s = BeautifulSoup(response_head, "html.parser")
+    # para documentos de solo imagenes
+   #try:
+    #   link_images = s.img.get('src')
+     #  return link_images
+   # except Exception as e:
     print(s)
-    s_texts = s.find_all("span", attrs={'class': 'a'})
-   # for text in s_texts:
-
 
 
 
 def dowload(contenido):
     images,title = contenido['link_pages'] , contenido['title']
-
     if os.path.isdir(f'./{title}/'):
         shutil.rmtree(f'{title}')
-
     os.mkdir(f'{title}')
     os.mkdir(f'{title}/imagenes')
     for i, image in enumerate(images):
@@ -156,8 +185,6 @@ def dowload(contenido):
         documento.write(img2pdf.convert(imagenes_jpg))
 
 
-
-
 if __name__ == "__main__":
-    url = 'https://www.scribd.com/document/52502066/desorcion-gaseosa-final'
+    url = 'https://www.academia.edu/43525710/Qu%C3%A9_son_las_bases_de_datos_NoSQL'
     main(url)
