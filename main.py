@@ -7,18 +7,17 @@ import img2pdf
 import shutil
 from string import Template
 
-# download documents issue , slideshare, academia, scribd (images)
+# download documents issue , slideshare, academia.edu
 def main(url):
     if 'issuu' in url:
         contenido = issuu(url)
+        dowload(contenido)
     elif 'slideshare' in url:
         contenido = slideshare(url)
+        dowload(contenido)
     elif 'academia' in url:
         contenido = academia(url)
 
-
-
-# contenido = { title : "titulo" , link_pages : [ links ] }
 
 def slideshare(url):
     contenido = {}
@@ -41,7 +40,7 @@ def slideshare(url):
     except Exception as e:
         print(f'Error {e}')
 
-    dowload(contenido)
+    return contenido
 
 
 def issuu(url):
@@ -71,8 +70,8 @@ def issuu(url):
             print('No se pudo obtener el documento', url)
     except Exception as e:
         print(f'Error {e}')
-    dowload(contenido)
 
+    return contenido
 
 '''def scribd_images(url):
     contenido = {}
