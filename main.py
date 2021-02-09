@@ -13,11 +13,12 @@ def main(url):
         contenido = issuu(url)
     elif 'slideshare' in url:
         contenido = slideshare(url)
-    elif 'scribd' in url:
-        contenido = scribd_images(url)
     elif 'academia' in url:
         contenido = academia(url)
 
+
+
+# contenido = { title : "titulo" , link_pages : [ links ] }
 
 def slideshare(url):
     contenido = {}
@@ -73,9 +74,7 @@ def issuu(url):
     dowload(contenido)
 
 
-# contenido = { title : "titulo" , link_pages : [ links ] }
-
-def scribd_images(url):
+'''def scribd_images(url):
     contenido = {}
     images = []
     try:
@@ -95,6 +94,7 @@ def scribd_images(url):
             print(f'Extrayendo documento : {title}')
             for url in jsonp_urls:
                 div = extract_html(url)
+                print(div)
                 link = div.find("img").get('src')
                 images.append(link)
             contenido['title'] = title
@@ -104,7 +104,7 @@ def scribd_images(url):
     except Exception as e:
         print(f'Error {e}')
     dowload(contenido)
-
+'''
 
 def academia(url):
     divs_string = ""
