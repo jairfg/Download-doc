@@ -1,21 +1,11 @@
-import random
-import sys
 import time
-
 from bs4 import BeautifulSoup
 from selenium import webdriver
 import requests
 import os
-import re
 import img2pdf
-import wget
 import shutil
-import sys
 from string import Template
-
-
-# SLIDESHARE , ISSUE , SCRIBD , ACADEMIA.EDU
-# images , document => scribd , academia.edu
 
 
 def main(url):
@@ -24,12 +14,9 @@ def main(url):
     elif 'slideshare' in url:
         contenido = slideshare(url)
     elif 'scribd' in url:
-        contenido = scribd(url)
+        contenido = academia(url)
     elif 'academia' in url:
         contenido = academia(url)
-
-
-# return dowload(contenido)
 
 
 def slideshare(url):
@@ -90,7 +77,7 @@ def issuu(url):
 
 # contenido = { title : "titulo" , link_pages : [ links ] }
 
-def scribd(url):
+def scribd_images(url):
     contenido = {}
     images = []
     try:
@@ -152,7 +139,7 @@ def academia(url):
         divParrafos = extract_html(url)
 
         divs.append(divParrafos)
-    create_html(divs, list_styles)
+    create_html(divs, list_styles, title)
     driver.close()
 
 
@@ -168,19 +155,39 @@ def extract_html(url):
     return s
 
 
-def create_html(divs, list_styles):
+def create_html(divs, list_styles, title):
     divs_string = ""
     styles_string = ""
     for div in divs:
         divs_string = divs_string + str(div)
+
     for style in list_styles:
         styles_string = styles_string + str(style)
-    filein = open('main.html')
+
+    styles_string = styles_string.replace(".ff0, .ff1, .ff2, .ff3, .ff4, .ff5, .ff6, .ff7 {display: none;}"," ")
+
+    with open(f'{title}.html', "w") as f:
+        f.write(f"""
+           <!DOCTYPE html>
+           <html lang="en"> 
+           <head>
+           <meta charset="UTF-8">   
+           <title>Title</title>
+           </head>
+           $list_styles
+           <body>
+           $divs
+           </body>
+           </html>
+           """)
+
+    filein = open(f'{title}.html')
     src = Template(filein.read())
     d = {'divs': divs_string, 'list_styles': styles_string}
     result = src.substitute(d)
-    filein2 = open('nuevo.html', 'w')
-    filein2.writelines(result)
+
+    with open(f'{title}.html', "w") as f:
+        f.write(result)
 
 
 def dowload(contenido):
@@ -212,5 +219,5 @@ def dowload(contenido):
 
 
 if __name__ == "__main__":
-    url = 'https://www.academia.edu/44919129/The_Role_of_Science_Technology_and_the_Individual_on_the_Way_of_Software_Systems_Since_1968'
+    url = 'https://www.academia.edu/32190313/Software_Engineering_Software_Engineering'
     main(url)
