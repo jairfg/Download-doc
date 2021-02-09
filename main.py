@@ -7,14 +7,14 @@ import img2pdf
 import shutil
 from string import Template
 
-
+# download documents issue , slideshare, academia, scribd (images)
 def main(url):
     if 'issuu' in url:
         contenido = issuu(url)
     elif 'slideshare' in url:
         contenido = slideshare(url)
     elif 'scribd' in url:
-        contenido = academia(url)
+        contenido = scribd_images(url)
     elif 'academia' in url:
         contenido = academia(url)
 
@@ -39,7 +39,8 @@ def slideshare(url):
             print('No se pudo obtener el documento', url)
     except Exception as e:
         print(f'Error {e}')
-    return contenido
+
+    dowload(contenido)
 
 
 def issuu(url):
@@ -69,10 +70,7 @@ def issuu(url):
             print('No se pudo obtener el documento', url)
     except Exception as e:
         print(f'Error {e}')
-    return contenido
-
-
-# dowloand document
+    dowload(contenido)
 
 
 # contenido = { title : "titulo" , link_pages : [ links ] }
@@ -86,7 +84,6 @@ def scribd_images(url):
             s = BeautifulSoup(response.text, 'html.parser')
             title = s.find("h1").get_text().strip()
             scripts = s.find_all("script", type="text/javascript")
-            print(scripts)
             jsonp_urls = []
             for script in scripts:
                 for content in script:
@@ -97,21 +94,22 @@ def scribd_images(url):
                         jsonp_urls.append(jsonp)
             print(f'Extrayendo documento : {title}')
             for url in jsonp_urls:
-                link_images = extract_html(url)
-                print(link_images)
-                images.append(link_images)
+                div = extract_html(url)
+                link = div.find("img").get('src')
+                images.append(link)
             contenido['title'] = title
             contenido['link_pages'] = images
         else:
             print('No se pudo obtener el documento', url)
     except Exception as e:
         print(f'Error {e}')
-    return contenido
+    dowload(contenido)
 
 
 def academia(url):
-    divs = []
-    list_styles = []
+    divs_string = ""
+    styles_string = ""
+
     options = webdriver.ChromeOptions()
     options.add_argument('--incognito')
     driver = webdriver.Chrome(executable_path='/home/jkevin/Projects/python/download-doc/chromedriver', options=options)
@@ -123,9 +121,15 @@ def academia(url):
     title = s.find("h1").get_text().strip()
     scripts = s.find_all("script", type="text/javascript")
     styles = s.find_all("style")
+    driver.close()
+
     for style in styles:
-        list_styles.append(style)
+        style = str(style)
+        style = style.replace("{display: none;}", " ")
+        styles_string = styles_string + style
+
     jsonp_urls = []
+
     for script in scripts:
         for content in script:
             inicio_url = content.find("https://")
@@ -134,13 +138,13 @@ def academia(url):
                 jsonp = content[inicio_url: final_url + 6]
                 jsonp_urls.append(jsonp)
     print(f'Extrayendo documento : {title}')
+
     for i, url in enumerate(jsonp_urls):
         print(f'Extrayendo pagina {i + 1}')
-        divParrafos = extract_html(url)
+        div = extract_html(url)
+        divs_string = divs_string + str(div)
 
-        divs.append(divParrafos)
-    create_html(divs, list_styles, title)
-    driver.close()
+    generate_html(divs_string, styles_string, title)
 
 
 def extract_html(url):
@@ -151,20 +155,11 @@ def extract_html(url):
     response_head = response.replace("window.page" + page_no + '_callback(["', "").replace("\\n", "").replace("\\",
                                                                                                               "").replace(
         '"]);', "").replace("orig", "src")
-    s = BeautifulSoup(response_head, "html.parser")
-    return s
+    page = BeautifulSoup(response_head, "html.parser")
+    return page
 
 
-def create_html(divs, list_styles, title):
-    divs_string = ""
-    styles_string = ""
-    for div in divs:
-        divs_string = divs_string + str(div)
-
-    for style in list_styles:
-        styles_string = styles_string + str(style)
-
-    styles_string = styles_string.replace(".ff0, .ff1, .ff2, .ff3, .ff4, .ff5, .ff6, .ff7 {display: none;}"," ")
+def generate_html(divs_string, styles_string, title):
 
     with open(f'{title}.html', "w") as f:
         f.write(f"""
@@ -219,5 +214,5 @@ def dowload(contenido):
 
 
 if __name__ == "__main__":
-    url = 'https://www.academia.edu/32190313/Software_Engineering_Software_Engineering'
+    url = input("url documents: ")
     main(url)
