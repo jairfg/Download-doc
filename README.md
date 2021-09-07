@@ -2,10 +2,11 @@
 descargar documentos de  academia.edu , issuu , slideshare con Python-selenium
 instrucciones : 
 
-sudo apt install python3-pip
-pip3 install bs4
-pip3 install selenium
-pip3 install img2pdf
+### sudo apt install python3-pip
+### pip3 install bs4
+### pip3 install selenium
+### pip3 install img2pdf
+### python3 main.py
 
 ## video demostración :
 
