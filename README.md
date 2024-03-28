@@ -1,15 +1,15 @@
 # Download-doc
-descargar documentos de  academia.edu , issuu , slideshare con Python-selenium
-instrucciones : 
+download documents from academia.edu, issuu, slideshare with Python-selenium 
+instructions:
 
-## Instrucciones :
+## Instructions :
 ### - sudo apt install python3-pip
 ### - pip3 install bs4
 ### - pip3 install selenium
 ### - pip3 install img2pdf
 ### - python3 main.py
 
-video del proyecto :
+project video:
 
 [![](https://img.youtube.com/vi/B7rkj3qKLVk/0.jpg)](https://www.youtube.com/watch?v=B7rkj3qKLVk)
 
